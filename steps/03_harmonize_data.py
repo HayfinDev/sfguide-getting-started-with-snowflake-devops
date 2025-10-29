@@ -181,6 +181,7 @@ pipeline = [
     ),
     # Using the geography relationships provided by Snowflake Public Data we collect all the
     # zip codes belonging to a city.
+    
     View(
         name="zip_codes_in_city",
         columns=[
@@ -236,7 +237,10 @@ pipeline = [
 
 
 # entry point for PythonAPI
-root = Root(Session.builder.getOrCreate())
+# root = Root(Session.builder.getOrCreate())
+root = Root(Session.builder.config("connection_name", "HAYFIN-AZUK").create())
+
+
 
 # create views in Snowflake
 silver_schema = root.databases["quickstart_prod"].schemas["silver"]
