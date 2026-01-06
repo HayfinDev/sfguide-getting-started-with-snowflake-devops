@@ -13,7 +13,7 @@ jobs:
       REPO_NAME: "quickstart_common.public.quickstart_repo"
       
       SNOWFLAKE_CONNECTIONS_DEFAULT_AUTHENTICATOR: "SNOWFLAKE_JWT"
-      SNOWFLAKE_CONNECTIONS_DEFAULT_PRIVATE_KEY_FILE: ".snowflake/snowflake_rsa_key"
+      SNOWFLAKE_CONNECTIONS_DEFAULT_PRIVATE_KEY_FILE: ".snowflake/snowflake_rsa_key.p8"
       # Read connection secrets
       SNOWFLAKE_CONNECTIONS_DEFAULT_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
       SNOWFLAKE_CONNECTIONS_DEFAULT_USER: ${{ secrets.SNOWFLAKE_USER }}
@@ -21,7 +21,7 @@ jobs:
       SNOWFLAKE_AUTHENTICATOR: "SNOWFLAKE_JWT"
       SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
       SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
-      SNOWFLAKE_PRIVATE_KEY_RAW: ".snowflake/snowflake_rsa_key"
+      SNOWFLAKE_PRIVATE_KEY_RAW: ".snowflake/snowflake_rsa_key.p8"
 
       # Optional context
       SNOWFLAKE_ROLE: ${{ secrets.SNOWFLAKE_ROLE }}
@@ -34,7 +34,7 @@ jobs:
       # Write private key secret as file
       - name: Configure Private Key
         run: |
-          echo "${{ secrets.SNOWFLAKE_PRIVATE_KEY }}" > .snowflake/snowflake_rsa_key
+          echo "${{ secrets.SNOWFLAKE_PRIVATE_KEY }}" > .snowflake/snowflake_rsa_key.p8
           
       - name: Validate required Snowflake secrets are present
         shell: bash
