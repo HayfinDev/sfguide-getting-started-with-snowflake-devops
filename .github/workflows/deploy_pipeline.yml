@@ -11,43 +11,33 @@ jobs:
 
     env:
       REPO_NAME: "quickstart_common.public.quickstart_repo"
-      
-      SNOWFLAKE_CONNECTIONS_DEFAULT_AUTHENTICATOR: "SNOWFLAKE_JWT"
-      SNOWFLAKE_CONNECTIONS_DEFAULT_PRIVATE_KEY_FILE: ".snowflake/snowflake_rsa_key.p8"
-      # Read connection secrets
-      SNOWFLAKE_CONNECTIONS_DEFAULT_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
-      SNOWFLAKE_CONNECTIONS_DEFAULT_USER: ${{ secrets.SNOWFLAKE_USER }}
-      # Temporary connection (used by -x)
-      SNOWFLAKE_AUTHENTICATOR: "SNOWFLAKE_JWT"
+
+      # Temporary connection used by -x
+      SNOWFLAKE_AUTHENTICATOR: SNOWFLAKE_JWT
       SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
       SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
-      SNOWFLAKE_PRIVATE_KEY_RAW: ".snowflake/snowflake_rsa_key.p8"
+      SNOWFLAKE_PRIVATE_KEY_RAW: ${{ secrets.SNOWFLAKE_PRIVATE_KEY_RAW }}
 
-      # Optional context
       SNOWFLAKE_ROLE: ${{ secrets.SNOWFLAKE_ROLE }}
       SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        
-      # Write private key secret as file
-      - name: Configure Private Key
-        run: |
-          echo "${{ secrets.SNOWFLAKE_PRIVATE_KEY }}" > .snowflake/snowflake_rsa_key.p8
-          
-      - name: Validate required Snowflake secrets are present
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Validate required secrets
         shell: bash
         run: |
           set -euo pipefail
-          test -n "${SNOWFLAKE_ACCOUNT:-}" || (echo "Missing/empty SNOWFLAKE_ACCOUNT secret" && exit 1)
-          test -n "${SNOWFLAKE_USER:-}" || (echo "Missing/empty SNOWFLAKE_USER secret" && exit 1)
-          test -n "${SNOWFLAKE_PRIVATE_KEY_RAW:-}" || (echo "Missing/empty SNOWFLAKE_PRIVATE_KEY_RAW secret" && exit 1)
+          test -n "${SNOWFLAKE_ACCOUNT:-}" || (echo "Missing SNOWFLAKE_ACCOUNT" && exit 1)
+          test -n "${SNOWFLAKE_USER:-}" || (echo "Missing SNOWFLAKE_USER" && exit 1)
+          test -n "${SNOWFLAKE_PRIVATE_KEY_RAW:-}" || (echo "Missing SNOWFLAKE_PRIVATE_KEY_RAW" && exit 1)
 
       - name: Install Snowflake CLI
         uses: snowflakedb/snowflake-cli-action@v1.5
 
-      - name: Test connection (temporary)
+      - name: Test connection
         run: snow connection test -x
 
       - name: Fetch repository changes
