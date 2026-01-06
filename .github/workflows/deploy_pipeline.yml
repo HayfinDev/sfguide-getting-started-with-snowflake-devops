@@ -39,6 +39,9 @@ jobs:
           cli-version: "latest"
           default-config-file-path: ".snowflake/config.toml"
 
+      - name: Verify connection
+        run: snow connection test -x
+
       # Update Snowflake's copy of the repository
       - name: Fetch repository changes
         continue-on-error: true
