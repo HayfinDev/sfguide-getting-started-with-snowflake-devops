@@ -1,13 +1,8 @@
 name: Deploy data pipeline
 
-# Action will run on pushes to selected branches
 on:
   push:
-    branches:
-      - dev
-      - main
-
-  # Allows you to run this workflow manually from the Actions tab
+    branches: [dev, main]
   workflow_dispatch:
 
 jobs:
@@ -16,47 +11,60 @@ jobs:
 
     env:
       REPO_NAME: "quickstart_common.public.quickstart_repo"
+
+      # Connection: default
       SNOWFLAKE_CONNECTIONS_DEFAULT_AUTHENTICATOR: "SNOWFLAKE_JWT"
       SNOWFLAKE_CONNECTIONS_DEFAULT_PRIVATE_KEY_FILE: ".snowflake/snowflake_rsa_key"
-      # Read connection secrets
       SNOWFLAKE_CONNECTIONS_DEFAULT_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
       SNOWFLAKE_CONNECTIONS_DEFAULT_USER: ${{ secrets.SNOWFLAKE_USER }}
 
+      # Optional but commonly required by your scripts/DDL
+      SNOWFLAKE_CONNECTIONS_DEFAULT_ROLE: ${{ secrets.SNOWFLAKE_ROLE }}
+      SNOWFLAKE_CONNECTIONS_DEFAULT_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
+
     steps:
-      # Checkout step is necessary if you want to use a config file from your repo
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Write private key secret as file
       - name: Configure Private Key
+        shell: bash
         run: |
-          echo "${{ secrets.SNOWFLAKE_PRIVATE_KEY }}" > .snowflake/snowflake_rsa_key
+          set -euo pipefail
+          mkdir -p .snowflake
+          cat > .snowflake/snowflake_rsa_key <<'KEY'
+${{ secrets.SNOWFLAKE_PRIVATE_KEY }}
+KEY
+          chmod 600 .snowflake/snowflake_rsa_key
 
-      # Install Snowflake CLI GitHub Action and point to config file
-      - name: Install snowflake-cli
-        uses: Snowflake-Labs/snowflake-cli-action@v1.5
-        with:
-          cli-version: "latest"
-          default-config-file-path: ".snowflake/config.toml"
+      - name: Validate required Snowflake secrets are present
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "${SNOWFLAKE_CONNECTIONS_DEFAULT_ACCOUNT:-}" || (echo "Missing SNOWFLAKE_ACCOUNT secret" && exit 1)
+          test -n "${SNOWFLAKE_CONNECTIONS_DEFAULT_USER:-}" || (echo "Missing/empty SNOWFLAKE_USER secret" && exit 1)
+          test -s "${SNOWFLAKE_CONNECTIONS_DEFAULT_PRIVATE_KEY_FILE:-}" || (echo "Private key file not written" && exit 1)
 
-      - name: Verify connection
-        run: snow connection test -x
+      - name: Install Snowflake CLI
+        uses: snowflakedb/snowflake-cli-action@v2.0.1
 
-      # Update Snowflake's copy of the repository
+      - name: Test connection
+        run: snow connection test -c default
+
       - name: Fetch repository changes
-        continue-on-error: true
-        run: snow git fetch "${REPO_NAME}"
+        run: snow git fetch "@${REPO_NAME}"
 
-      # Deploy pipeline with branch specific parameters
       - name: Deploy data pipeline to ${{ github.ref_name }}
+        shell: bash
         run: |
-          BRANCH_NAME=${{ github.ref_name }}
-          if [ "${BRANCH_NAME}" == "main" ]; then
+          set -euo pipefail
+          BRANCH_NAME="${{ github.ref_name }}"
+          if [ "${BRANCH_NAME}" = "main" ]; then
             RETENTION_TIME=1
           else
             RETENTION_TIME=0
           fi
+
           snow git execute \
-            "@${REPO_NAME}/branches/${BRANCH_NAME}/steps/0[1234]_*" \
+            "@${REPO_NAME}/branches/${BRANCH_NAME}/steps/0[134]_*" \
             -D "environment='${BRANCH_NAME}'" \
             -D "retention_time=${RETENTION_TIME}"
