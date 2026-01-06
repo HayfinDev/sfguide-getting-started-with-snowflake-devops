@@ -12,46 +12,36 @@ jobs:
     env:
       REPO_NAME: "quickstart_common.public.quickstart_repo"
 
-      # Connection: default
-      SNOWFLAKE_CONNECTIONS_DEFAULT_AUTHENTICATOR: "SNOWFLAKE_JWT"
-      SNOWFLAKE_CONNECTIONS_DEFAULT_PRIVATE_KEY_FILE: ".snowflake/snowflake_rsa_key"
-      SNOWFLAKE_CONNECTIONS_DEFAULT_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
-      SNOWFLAKE_CONNECTIONS_DEFAULT_USER: ${{ secrets.SNOWFLAKE_USER }}
+      # Temporary connection (used by -x)
+      SNOWFLAKE_AUTHENTICATOR: SNOWFLAKE_JWT
+      SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+      SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
+      SNOWFLAKE_PRIVATE_KEY_RAW: ${{ secrets.SNOWFLAKE_PRIVATE_KEY_RAW }}
 
-      # Optional but commonly required by your scripts/DDL
-      SNOWFLAKE_CONNECTIONS_DEFAULT_ROLE: ${{ secrets.SNOWFLAKE_ROLE }}
-      SNOWFLAKE_CONNECTIONS_DEFAULT_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
+      # Optional context
+      SNOWFLAKE_ROLE: ${{ secrets.SNOWFLAKE_ROLE }}
+      SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Configure Private Key
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p .snowflake
-          cat > .snowflake/snowflake_rsa_key <<'KEY'
-          ${{ secrets.SNOWFLAKE_PRIVATE_KEY }}
-          KEY
-          chmod 600 .snowflake/snowflake_rsa_key
-
       - name: Validate required Snowflake secrets are present
         shell: bash
         run: |
           set -euo pipefail
-          test -n "${SNOWFLAKE_CONNECTIONS_DEFAULT_ACCOUNT:-}" || (echo "Missing SNOWFLAKE_ACCOUNT secret" && exit 1)
-          test -n "${SNOWFLAKE_CONNECTIONS_DEFAULT_USER:-}" || (echo "Missing/empty SNOWFLAKE_USER secret" && exit 1)
-          test -s "${SNOWFLAKE_CONNECTIONS_DEFAULT_PRIVATE_KEY_FILE:-}" || (echo "Private key file not written" && exit 1)
+          test -n "${SNOWFLAKE_ACCOUNT:-}" || (echo "Missing/empty SNOWFLAKE_ACCOUNT secret" && exit 1)
+          test -n "${SNOWFLAKE_USER:-}" || (echo "Missing/empty SNOWFLAKE_USER secret" && exit 1)
+          test -n "${SNOWFLAKE_PRIVATE_KEY_RAW:-}" || (echo "Missing/empty SNOWFLAKE_PRIVATE_KEY_RAW secret" && exit 1)
 
       - name: Install Snowflake CLI
         uses: snowflakedb/snowflake-cli-action@v1.5
 
-      - name: Test connection
+      - name: Test connection (temporary)
         run: snow connection test -x
 
       - name: Fetch repository changes
-        run: snow git fetch "@${REPO_NAME}"
+        run: snow git fetch "@${REPO_NAME}" -x
 
       - name: Deploy data pipeline to ${{ github.ref_name }}
         shell: bash
@@ -67,4 +57,5 @@ jobs:
           snow git execute \
             "@${REPO_NAME}/branches/${BRANCH_NAME}/steps/0[134]_*" \
             -D "environment='${BRANCH_NAME}'" \
-            -D "retention_time=${RETENTION_TIME}"
+            -D "retention_time=${RETENTION_TIME}" \
+            -x
