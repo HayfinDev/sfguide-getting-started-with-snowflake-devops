@@ -41,6 +41,7 @@ jobs:
 
       # Update Snowflake's copy of the repository
       - name: Fetch repository changes
+        continue-on-error: true
         run: snow git fetch "${REPO_NAME}"
 
       # Deploy pipeline with branch specific parameters
