@@ -11,12 +11,17 @@ jobs:
 
     env:
       REPO_NAME: "quickstart_common.public.quickstart_repo"
-
+      
+      SNOWFLAKE_CONNECTIONS_DEFAULT_AUTHENTICATOR: "SNOWFLAKE_JWT"
+      SNOWFLAKE_CONNECTIONS_DEFAULT_PRIVATE_KEY_FILE: ".snowflake/snowflake_rsa_key"
+      # Read connection secrets
+      SNOWFLAKE_CONNECTIONS_DEFAULT_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+      SNOWFLAKE_CONNECTIONS_DEFAULT_USER: ${{ secrets.SNOWFLAKE_USER }}
       # Temporary connection (used by -x)
-      SNOWFLAKE_AUTHENTICATOR: SNOWFLAKE_JWT
+      SNOWFLAKE_AUTHENTICATOR: "SNOWFLAKE_JWT"
       SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
       SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
-      SNOWFLAKE_PRIVATE_KEY_RAW: ${{ secrets.SNOWFLAKE_PRIVATE_KEY_RAW }}
+      SNOWFLAKE_PRIVATE_KEY_RAW: ".snowflake/snowflake_rsa_key"
 
       # Optional context
       SNOWFLAKE_ROLE: ${{ secrets.SNOWFLAKE_ROLE }}
@@ -25,7 +30,12 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
+        
+      # Write private key secret as file
+      - name: Configure Private Key
+        run: |
+          echo "${{ secrets.SNOWFLAKE_PRIVATE_KEY }}" > .snowflake/snowflake_rsa_key
+          
       - name: Validate required Snowflake secrets are present
         shell: bash
         run: |
