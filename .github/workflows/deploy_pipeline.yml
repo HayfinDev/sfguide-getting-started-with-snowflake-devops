@@ -48,7 +48,7 @@ jobs:
         uses: snowflakedb/snowflake-cli-action@v1.5
 
       - name: Test connection
-        run: snow connection test -c default
+        run: snow connection test -x
 
       - name: Fetch repository changes
         run: snow git fetch "@${REPO_NAME}"
