@@ -45,7 +45,7 @@ jobs:
           test -s "${SNOWFLAKE_CONNECTIONS_DEFAULT_PRIVATE_KEY_FILE:-}" || (echo "Private key file not written" && exit 1)
 
       - name: Install Snowflake CLI
-        uses: snowflakedb/snowflake-cli-action@v2.0.1
+        uses: snowflakedb/snowflake-cli-action@v1.5
 
       - name: Test connection
         run: snow connection test -c default
