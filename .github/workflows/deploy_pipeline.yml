@@ -32,8 +32,8 @@ jobs:
           set -euo pipefail
           mkdir -p .snowflake
           cat > .snowflake/snowflake_rsa_key <<'KEY'
-${{ secrets.SNOWFLAKE_PRIVATE_KEY }}
-KEY
+          ${{ secrets.SNOWFLAKE_PRIVATE_KEY }}
+          KEY
           chmod 600 .snowflake/snowflake_rsa_key
 
       - name: Validate required Snowflake secrets are present
