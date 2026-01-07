@@ -53,7 +53,7 @@ jobs:
             RETENTION_TIME=0
           fi
           snow git execute \
-            "@${REPO_NAME}/branches/${BRANCH_NAME}/steps/0[14]_*" \
+            "@${REPO_NAME}/branches/${BRANCH_NAME}/steps/0[124]_*" \
             -D "environment='${BRANCH_NAME}'" \
             -D "retention_time=${RETENTION_TIME}"
 
@@ -65,4 +65,14 @@ jobs:
           snow connection test
           snow sql -q "SELECT CURRENT_ACCOUNT(), CURRENT_ROLE(), CURRENT_DATABASE();"
           snow git fetch "${REPO_NAME}"
+          BRANCH_NAME=${{ github.ref_name }}
+          if [ "${BRANCH_NAME}" == "main" ]; then
+            RETENTION_TIME=1
+          else
+            RETENTION_TIME=0
+          fi
+          snow git execute \
+            "@${REPO_NAME}/branches/${BRANCH_NAME}/steps/0[3]_*" \
+            -D "environment='${BRANCH_NAME}'" \
+            -D "retention_time=${RETENTION_TIME}"
 
