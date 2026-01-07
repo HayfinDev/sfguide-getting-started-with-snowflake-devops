@@ -62,5 +62,7 @@ jobs:
           snow --version
           snow --info
           snow connection list
-          snow --debug git fetch "${REPO_NAME}"
+          snow connection test
+          snow sql -q "SELECT CURRENT_ACCOUNT(), CURRENT_ROLE(), CURRENT_DATABASE();"
+          snow git fetch "${REPO_NAME}"
 
