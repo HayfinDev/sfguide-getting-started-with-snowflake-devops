@@ -53,6 +53,14 @@ jobs:
             RETENTION_TIME=0
           fi
           snow git execute \
-            "@${REPO_NAME}/branches/${BRANCH_NAME}/steps/0[134]_*" \
+            "@${REPO_NAME}/branches/${BRANCH_NAME}/steps/0[14]_*" \
             -D "environment='${BRANCH_NAME}'" \
             -D "retention_time=${RETENTION_TIME}"
+
+      - name: Deploy data step 3 to ${{ github.ref_name }}
+        run: |
+          snow --version
+          snow config list
+          snow connection list
+          snow --debug git fetch "${REPO_NAME}"
+
