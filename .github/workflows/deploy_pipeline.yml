@@ -60,7 +60,7 @@ jobs:
       - name: Deploy data step 3 to ${{ github.ref_name }}
         run: |
           snow --version
-          snow config list
+          snow --info
           snow connection list
           snow --debug git fetch "${REPO_NAME}"
 
