@@ -238,7 +238,7 @@ pipeline = [
 
 # entry point for PythonAPI
 # root = Root(Session.builder.getOrCreate())
-root = Root(Session.builder.create())
+root = Root(Session.builder.config("connection_name", "HAYFIN-AZUK").create())
 
 
 
